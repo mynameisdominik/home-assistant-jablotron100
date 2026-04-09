@@ -166,6 +166,7 @@ MAX_SECTIONS: Final = 15
 MAX_DEVICES: Final = 230
 MAX_PG_OUTPUTS: Final = 128
 
+<<<<<<< HEAD
 PACKET_GET_SYSTEM_INFO: Final[bytes] = b"\x30"
 PACKET_SYSTEM_INFO: Final[bytes] = b"\x40"
 PACKET_SECTIONS_STATES: Final[bytes] = b"\x51"
@@ -179,6 +180,23 @@ PACKET_DIAGNOSTICS: Final[bytes] = b"\x94"
 PACKET_DIAGNOSTICS_COMMAND: Final[bytes] = b"\x96"
 PACKET_GET_DEVICES_SECTIONS: Final[bytes] = b"\x3a"
 PACKET_DEVICES_SECTIONS: Final[bytes] = b"\x3b"
+=======
+PACKET_GET_SYSTEM_INFO: Final = b"\x30"
+PACKET_SYSTEM_INFO: Final = b"\x40"
+PACKET_SECTIONS_STATES: Final = b"\x51"
+PACKET_DEVICE_STATE: Final = b"\x55"
+PACKET_DEVICE_INFO: Final = b"\x90"
+PACKET_DEVICES_STATES: Final = b"\xd8"
+PACKET_PG_OUTPUTS_STATES: Final = b"\x50"
+PACKET_COMMAND: Final = b"\x52"
+PACKET_UI_CONTROL: Final = b"\x80"
+PACKET_DIAGNOSTICS: Final = b"\x94"
+PACKET_DIAGNOSTICS_COMMAND: Final = b"\x96"
+PACKET_GET_DEVICES_SECTIONS: Final = b"\x3a"
+PACKET_DEVICES_SECTIONS: Final = b"\x3b"
+PACKET_PG_OUTPUT_EVENT: Final = b"\xd0"
+PG_OUTPUT_EVENT_USER_ACTIVATION: Final = b"\x3c"
+>>>>>>> 0f7f394 (Add support for PG output event handling and track user activation)
 
 COMMAND_HEARTBEAT: Final[bytes] = b"\x02"
 COMMAND_GET_DEVICE_STATUS: Final[bytes] = b"\x0a"

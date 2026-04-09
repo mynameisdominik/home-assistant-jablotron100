@@ -88,10 +88,12 @@ from .const import (
 	PACKET_DIAGNOSTICS_COMMAND,
 	PACKET_GET_DEVICES_SECTIONS,
 	PACKET_GET_SYSTEM_INFO,
+	PACKET_PG_OUTPUT_EVENT,
 	PACKET_PG_OUTPUTS_STATES,
 	PACKET_SECTIONS_STATES,
 	PACKET_SYSTEM_INFO,
 	PACKET_UI_CONTROL,
+	PG_OUTPUT_EVENT_USER_ACTIVATION,
 	PartiallyArmingMode,
 	PG_OUTPUT_TURN_OFF,
 	PG_OUTPUT_TURN_ON,
@@ -1134,6 +1136,7 @@ class Jablotron:
 								self._update_all_hass_entities()
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 						elif self._is_keypad_auth_packet(packet):
 							self._parse_keypad_auth_packet(packet)
@@ -1142,6 +1145,11 @@ class Jablotron:
 							self._parse_pg_output_event_packet(packet)
 
 >>>>>>> 4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
+=======
+						elif self._is_pg_output_event_packet(packet):
+							self._parse_pg_output_event_packet(packet)
+
+>>>>>>> 0f7f394 (Add support for PG output event handling and track user activation)
 						elif self._is_pg_outputs_states_packet(packet):
 							self._parse_pg_outputs_states_packet(packet)
 
@@ -2333,6 +2341,7 @@ class Jablotron:
 		LOGGER.debug("Authorized user: {}".format(user_no))
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 	def _parse_pg_output_event_packet(self, packet: bytes) -> None:
 		pg_output_number = self.bytes_to_int(packet[2:3]) - 0x32
@@ -2380,6 +2389,14 @@ class Jablotron:
 			self._pg_activation_context[pg_number] = (user, time.time())
 
 >>>>>>> 16e2837 (Add Jablotron Programmable Output Switch Component)
+=======
+	def _parse_pg_output_event_packet(self, packet: bytes) -> None:
+		offset = 104 if self._is_central_unit_101_or_similar() else 44
+		user_no = int((self.bytes_to_int(packet[3:4]) - offset) / 4)
+		self._last_authorized_user_or_device = "User {}".format(user_no)
+		LOGGER.debug("PG output activated by user: {}".format(user_no))
+
+>>>>>>> 0f7f394 (Add support for PG output event handling and track user activation)
 	@core.callback
 	def _data_to_store(self) -> dict:
 		return self._stored_data
@@ -2430,6 +2447,7 @@ class Jablotron:
 
 	@staticmethod
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 	def _is_pg_output_event_packet(packet: bytes) -> bool:
 		if packet[:1] != PACKET_PG_OUTPUT_EVENT:
@@ -2457,6 +2475,12 @@ class Jablotron:
 
 	@staticmethod
 >>>>>>> 4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
+=======
+	def _is_pg_output_event_packet(packet: bytes) -> bool:
+		return packet[:1] == PACKET_PG_OUTPUT_EVENT and packet[2:3] == PG_OUTPUT_EVENT_USER_ACTIVATION
+
+	@staticmethod
+>>>>>>> 0f7f394 (Add support for PG output event handling and track user activation)
 	def _is_pg_output_toggle_packet(packet: bytes) -> bool:
 		return packet[:1] == PACKET_UI_CONTROL and packet[2:3] == UI_CONTROL_TOGGLE_PG_OUTPUT
 
