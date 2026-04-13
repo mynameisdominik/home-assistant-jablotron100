@@ -252,10 +252,14 @@ class Jablotron:
 
 		self._last_authorized_user_or_device: str | None = None
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 		self._last_keypad_auth: tuple[str, float] | None = None
 		self._pg_activation_context: dict[int, tuple[str, float]] = {}
 >>>>>>> 16e2837 (Add Jablotron Programmable Output Switch Component)
+=======
+		self._last_keypad_auth: tuple[str, float] | None = None
+>>>>>>> 4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
 		self._successful_login: bool = True
 
 	def signal_entities_added(self) -> str:
@@ -277,7 +281,10 @@ class Jablotron:
 		return self._last_authorized_user_or_device
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
 	def get_fresh_keypad_auth(self, max_age_seconds: float = 3.0) -> str | None:
 		if self._last_keypad_auth is None:
 			return None
@@ -286,6 +293,7 @@ class Jablotron:
 			return None
 		return user
 
+<<<<<<< HEAD
 	def set_pg_activation_context(self, pg_number: int, user: str) -> None:
 		"""Store user context for a specific PG activation."""
 		self._pg_activation_context[pg_number] = (user, time.time())
@@ -301,6 +309,8 @@ class Jablotron:
 		return user
 
 >>>>>>> 16e2837 (Add Jablotron Programmable Output Switch Component)
+=======
+>>>>>>> 4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
 	async def initialize(self) -> None:
 		def shutdown_event(_):
 			self.shutdown()
@@ -1123,6 +1133,15 @@ class Jablotron:
 							if in_service_mode != self.in_service_mode:
 								self._update_all_hass_entities()
 
+<<<<<<< HEAD
+=======
+						elif self._is_keypad_auth_packet(packet):
+							self._parse_keypad_auth_packet(packet)
+
+						elif self._is_pg_output_event_packet(packet):
+							self._parse_pg_output_event_packet(packet)
+
+>>>>>>> 4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
 						elif self._is_pg_outputs_states_packet(packet):
 							self._parse_pg_outputs_states_packet(packet)
 
@@ -2325,6 +2344,21 @@ class Jablotron:
 		user = "User {}".format(user_no)
 		source = "F-Link" if packet[5:6] == b"\x3e" else "keypad"
 		LOGGER.debug("PG {} activated by user: {} (source: {})".format(pg_output_number, user_no, source))
+<<<<<<< HEAD
+=======
+
+		pg_output_id = self._get_pg_output_id(pg_output_number)
+		entity = self.hass_entities.get(pg_output_id)
+		if entity is not None and hasattr(entity, "set_changed_by"):
+			self._hass.loop.call_soon_threadsafe(entity.set_changed_by, user)
+
+	def _parse_keypad_auth_packet(self, packet: bytes) -> None:
+		offset = 104 if self._is_central_unit_101_or_similar() else 44
+		user_no = int((self.bytes_to_int(packet[3:4]) - offset) / 4)
+		user = "User {}".format(user_no)
+		self._last_keypad_auth = (user, time.time())
+		LOGGER.debug("Keypad auth by user: {}".format(user_no))
+>>>>>>> 4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
 
 		# Store user context for this specific PG
 		self.set_pg_activation_context(pg_output_number, user)
@@ -2395,6 +2429,34 @@ class Jablotron:
 		return packet[:1] == PACKET_PG_OUTPUTS_STATES
 
 	@staticmethod
+<<<<<<< HEAD
+=======
+	def _is_pg_output_event_packet(packet: bytes) -> bool:
+		if packet[:1] != PACKET_PG_OUTPUT_EVENT:
+			return False
+		if len(packet) < 8:
+			return False
+		# byte[4] == 0x04 marks "PG activation by user"
+		# byte[5]: 0x3e = F-Link/Server, 0x0f = physical keypad
+		# byte[2] encodes PG number (0x32 + pg), valid range for PG 1..32
+		return (
+			packet[4:5] == b"\x04"
+			and packet[5:6] in (b"\x3e", b"\x0f")
+			and 0x33 <= packet[2] <= 0x52
+		)
+
+	@staticmethod
+	def _is_keypad_auth_packet(packet: bytes) -> bool:
+		if packet[:1] != PACKET_PG_OUTPUT_EVENT:
+			return False
+		if len(packet) < 8:
+			return False
+		# byte[2] == 0x96 marks "keypad authorization" event
+		# byte[4:6] == 0x040f marks physical keypad source
+		return packet[2:3] == b"\x96" and packet[4:6] == b"\x04\x0f"
+
+	@staticmethod
+>>>>>>> 4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
 	def _is_pg_output_toggle_packet(packet: bytes) -> bool:
 		return packet[:1] == PACKET_UI_CONTROL and packet[2:3] == UI_CONTROL_TOGGLE_PG_OUTPUT
 
