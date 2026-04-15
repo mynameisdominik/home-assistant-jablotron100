@@ -251,6 +251,11 @@ class Jablotron:
 		self.in_service_mode = False
 
 		self._last_authorized_user_or_device: str | None = None
+<<<<<<< HEAD
+=======
+		self._last_keypad_auth: tuple[str, float] | None = None
+		self._pg_activation_context: dict[int, tuple[str, float]] = {}
+>>>>>>> 16e2837 (Add Jablotron Programmable Output Switch Component)
 		self._successful_login: bool = True
 
 	def signal_entities_added(self) -> str:
@@ -271,6 +276,31 @@ class Jablotron:
 	def last_authorized_user_or_device(self) -> str | None:
 		return self._last_authorized_user_or_device
 
+<<<<<<< HEAD
+=======
+	def get_fresh_keypad_auth(self, max_age_seconds: float = 3.0) -> str | None:
+		if self._last_keypad_auth is None:
+			return None
+		user, timestamp = self._last_keypad_auth
+		if time.time() - timestamp > max_age_seconds:
+			return None
+		return user
+
+	def set_pg_activation_context(self, pg_number: int, user: str) -> None:
+		"""Store user context for a specific PG activation."""
+		self._pg_activation_context[pg_number] = (user, time.time())
+
+	def get_pg_activation_context(self, pg_number: int, max_age_seconds: float = 8.0) -> str | None:
+		"""Retrieve user context for a specific PG if still fresh."""
+		if pg_number not in self._pg_activation_context:
+			return None
+		user, timestamp = self._pg_activation_context[pg_number]
+		if time.time() - timestamp > max_age_seconds:
+			del self._pg_activation_context[pg_number]
+			return None
+		return user
+
+>>>>>>> 16e2837 (Add Jablotron Programmable Output Switch Component)
 	async def initialize(self) -> None:
 		def shutdown_event(_):
 			self.shutdown()
@@ -2283,6 +2313,39 @@ class Jablotron:
 		self._last_authorized_user_or_device = "User {}".format(user_no)
 		LOGGER.debug("Authorized user: {}".format(user_no))
 
+<<<<<<< HEAD
+=======
+	def _parse_pg_output_event_packet(self, packet: bytes) -> None:
+		pg_output_number = self.bytes_to_int(packet[2:3]) - 0x32
+		if pg_output_number < 1:
+			return
+
+		offset = 104 if self._is_central_unit_101_or_similar() else 44
+		user_no = int((self.bytes_to_int(packet[3:4]) - offset) / 4)
+		user = "User {}".format(user_no)
+		source = "F-Link" if packet[5:6] == b"\x3e" else "keypad"
+		LOGGER.debug("PG {} activated by user: {} (source: {})".format(pg_output_number, user_no, source))
+
+		# Store user context for this specific PG
+		self.set_pg_activation_context(pg_output_number, user)
+
+		pg_output_id = self._get_pg_output_id(pg_output_number)
+		entity = self.hass_entities.get(pg_output_id)
+		if entity is not None and hasattr(entity, "set_changed_by"):
+			self._hass.loop.call_soon_threadsafe(entity.set_changed_by, user)
+
+	def _parse_keypad_auth_packet(self, packet: bytes) -> None:
+		offset = 104 if self._is_central_unit_101_or_similar() else 44
+		user_no = int((self.bytes_to_int(packet[3:4]) - offset) / 4)
+		user = "User {}".format(user_no)
+		self._last_keypad_auth = (user, time.time())
+		LOGGER.debug("Keypad auth by user: {}".format(user_no))
+
+		# Update all per-PG contexts with fresh auth so any pending PG activation gets this user
+		for pg_number in list(self._pg_activation_context.keys()):
+			self._pg_activation_context[pg_number] = (user, time.time())
+
+>>>>>>> 16e2837 (Add Jablotron Programmable Output Switch Component)
 	@core.callback
 	def _data_to_store(self) -> dict:
 		return self._stored_data
