@@ -202,7 +202,7 @@ PACKET_GET_DEVICES_SECTIONS: Final = b"\x3a"
 PACKET_DEVICES_SECTIONS: Final = b"\x3b"
 PACKET_PG_OUTPUT_EVENT: Final = b"\xd0"
 PG_OUTPUT_EVENT_USER_ACTIVATION: Final = b"\x3c"
->>>>>>> 0f7f394 (Add support for PG output event handling and track user activation)
+>>>>>>> #0f7f394 (Add support for PG output event handling and track user activation)
 
 COMMAND_HEARTBEAT: Final[bytes] = b"\x02"
 COMMAND_GET_DEVICE_STATUS: Final[bytes] = b"\x0a"
