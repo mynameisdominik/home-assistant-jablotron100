@@ -265,15 +265,15 @@ class Jablotron:
 		self.in_service_mode = False
 
 		self._last_authorized_user_or_device: str | None = None
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
+ 
+ 
+
 		self._last_keypad_auth: tuple[str, float] | None = None
 		self._pg_activation_context: dict[int, tuple[str, float]] = {}
->>>>>>> 16e2837 (Add Jablotron Programmable Output Switch Component)
-=======
+ #16e2837 (Add Jablotron Programmable Output Switch Component)
+
 		self._last_keypad_auth: tuple[str, float] | None = None
->>>>>>> 4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
+ #4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
 		self._successful_login: bool = True
 
 	def signal_entities_added(self) -> str:
@@ -294,11 +294,9 @@ class Jablotron:
 	def last_authorized_user_or_device(self) -> str | None:
 		return self._last_authorized_user_or_device
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
+
+
+ #4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
 	def get_fresh_keypad_auth(self, max_age_seconds: float = 3.0) -> str | None:
 		if self._last_keypad_auth is None:
 			return None
@@ -307,7 +305,7 @@ class Jablotron:
 			return None
 		return user
 
-<<<<<<< HEAD
+ 
 	def set_pg_activation_context(self, pg_number: int, user: str) -> None:
 		"""Store user context for a specific PG activation."""
 		self._pg_activation_context[pg_number] = (user, time.time())
@@ -322,9 +320,9 @@ class Jablotron:
 			return None
 		return user
 
->>>>>>> 16e2837 (Add Jablotron Programmable Output Switch Component)
-=======
->>>>>>> 4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
+ #16e2837 (Add Jablotron Programmable Output Switch Component)
+
+ #4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
 	async def initialize(self) -> None:
 		def shutdown_event(_):
 			self.shutdown()
@@ -1360,21 +1358,20 @@ class Jablotron:
 							if in_service_mode != self.in_service_mode:
 								self._update_all_hass_entities()
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
+ 
+
 						elif self._is_keypad_auth_packet(packet):
 							self._parse_keypad_auth_packet(packet)
 
 						elif self._is_pg_output_event_packet(packet):
 							self._parse_pg_output_event_packet(packet)
 
->>>>>>> 4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
-=======
+ #4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
+
 						elif self._is_pg_output_event_packet(packet):
 							self._parse_pg_output_event_packet(packet)
 
->>>>>>> 0f7f394 (Add support for PG output event handling and track user activation)
+ #0f7f394 (Add support for PG output event handling and track user activation)
 						elif self._is_pg_outputs_states_packet(packet):
 							self._parse_pg_outputs_states_packet(packet)
 
@@ -2576,9 +2573,9 @@ class Jablotron:
 		self._last_authorized_user_or_device = "User {}".format(user_no)
 		LOGGER.debug("Authorized user: {}".format(user_no))
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
+ 
+ 
+
 	def _parse_pg_output_event_packet(self, packet: bytes) -> None:
 		pg_output_number = self.bytes_to_int(packet[2:3]) - 0x32
 		if pg_output_number < 1:
@@ -2589,8 +2586,8 @@ class Jablotron:
 		user = "User {}".format(user_no)
 		source = "F-Link" if packet[5:6] == b"\x3e" else "keypad"
 		LOGGER.debug("PG {} activated by user: {} (source: {})".format(pg_output_number, user_no, source))
-<<<<<<< HEAD
-=======
+ 
+
 
 		pg_output_id = self._get_pg_output_id(pg_output_number)
 		entity = self.hass_entities.get(pg_output_id)
@@ -2603,7 +2600,7 @@ class Jablotron:
 		user = "User {}".format(user_no)
 		self._last_keypad_auth = (user, time.time())
 		LOGGER.debug("Keypad auth by user: {}".format(user_no))
->>>>>>> 4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
+ #4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
 
 		# Store user context for this specific PG
 		self.set_pg_activation_context(pg_output_number, user)
@@ -2624,15 +2621,15 @@ class Jablotron:
 		for pg_number in list(self._pg_activation_context.keys()):
 			self._pg_activation_context[pg_number] = (user, time.time())
 
->>>>>>> 16e2837 (Add Jablotron Programmable Output Switch Component)
-=======
+ #16e2837 (Add Jablotron Programmable Output Switch Component)
+
 	def _parse_pg_output_event_packet(self, packet: bytes) -> None:
 		offset = 104 if self._is_central_unit_101_or_similar() else 44
 		user_no = int((self.bytes_to_int(packet[3:4]) - offset) / 4)
 		self._last_authorized_user_or_device = "User {}".format(user_no)
 		LOGGER.debug("PG output activated by user: {}".format(user_no))
 
->>>>>>> 0f7f394 (Add support for PG output event handling and track user activation)
+ #0f7f394 (Add support for PG output event handling and track user activation)
 	@core.callback
 	def _data_to_store(self) -> dict:
 		return self._stored_data
@@ -2682,9 +2679,9 @@ class Jablotron:
 		return packet[:1] == PACKET_PG_OUTPUTS_STATES
 
 	@staticmethod
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
+ 
+ 
+
 	def _is_pg_output_event_packet(packet: bytes) -> bool:
 		if packet[:1] != PACKET_PG_OUTPUT_EVENT:
 			return False
@@ -2710,13 +2707,13 @@ class Jablotron:
 		return packet[2:3] == b"\x96" and packet[4:6] == b"\x04\x0f"
 
 	@staticmethod
->>>>>>> 4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
-=======
+ #4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
+
 	def _is_pg_output_event_packet(packet: bytes) -> bool:
 		return packet[:1] == PACKET_PG_OUTPUT_EVENT and packet[2:3] == PG_OUTPUT_EVENT_USER_ACTIVATION
 
 	@staticmethod
->>>>>>> 0f7f394 (Add support for PG output event handling and track user activation)
+#0f7f394 (Add support for PG output event handling and track user activation)
 	def _is_pg_output_toggle_packet(packet: bytes) -> bool:
 		return packet[:1] == PACKET_UI_CONTROL and packet[2:3] == UI_CONTROL_TOGGLE_PG_OUTPUT
 

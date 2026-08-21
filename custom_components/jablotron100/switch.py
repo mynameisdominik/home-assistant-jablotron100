@@ -57,16 +57,14 @@ class JablotronProgrammableOutputEntity(JablotronEntity, SwitchEntity):
 		super()._update_attributes()
 
 		self._attr_is_on = self._get_state() == STATE_ON
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 0f7f394 (Add support for PG output event handling and track user activation)
+ 
+
+ #0f7f394 (Add support for PG output event handling and track user activation)
 		self._attr_extra_state_attributes = {
 			"changed_by": self._changed_by,
 		}
 
-<<<<<<< HEAD
+ 
 	def set_changed_by(self, user: str) -> None:
 		self._changed_by = user
 		self.refresh_state()
@@ -74,7 +72,6 @@ class JablotronProgrammableOutputEntity(JablotronEntity, SwitchEntity):
 	def update_state(self, state) -> None:
 		# When PG transitions OFF → ON, make sure changed_by reflects the user who triggered it.
 		# The d0 3c/3d event packet may arrive after the 0x50 state packet, so use the fresh
-<<<<<<< HEAD
 		# keypad auth as a fallback.
 		if state == STATE_ON and self._get_state() != STATE_ON:
 			# Level 1: Check per-PG context (recent auth for this specific output)
@@ -83,23 +80,23 @@ class JablotronProgrammableOutputEntity(JablotronEntity, SwitchEntity):
 			# Level 2: Fall back to global keypad auth
 			if fresh_auth is None:
 				fresh_auth = self._jablotron.get_fresh_keypad_auth()
-=======
+
 		# keypad auth captured from d0 08 96 as a fallback.
 		if state == STATE_ON and self._get_state() != STATE_ON:
 			fresh_auth = self._jablotron.get_fresh_keypad_auth()
->>>>>>> 4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
+ #4ac2a0a (Add keypad authentication handling and update changed_by for state transitions)
 			if fresh_auth is not None:
 				self._changed_by = fresh_auth
 
 		super().update_state(state)
->>>>>>> 16e2837 (Add Jablotron Programmable Output Switch Component)
-=======
+ #16e2837 (Add Jablotron Programmable Output Switch Component)
+
 	def update_state(self, state) -> None:
 		if self._get_state() != state:
 			self._changed_by = self._jablotron.last_authorized_user_or_device()
 
 		super().update_state(state)
->>>>>>> 0f7f394 (Add support for PG output event handling and track user activation)
+ #0f7f394 (Add support for PG output event handling and track user activation)
 
 	def turn_on(self, **kwargs) -> None:
 		self._jablotron.toggle_pg_output(self._control.pg_output_number, STATE_ON)
