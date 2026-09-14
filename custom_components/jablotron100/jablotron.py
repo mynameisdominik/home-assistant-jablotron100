@@ -13,7 +13,6 @@ from homeassistant.const import (
 	STATE_ON,
 )
 from homeassistant.components.alarm_control_panel import AlarmControlPanelState
-from homeassistant.helpers import storage
 from homeassistant.helpers.dispatcher import async_dispatcher_send, dispatcher_send
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
@@ -21,6 +20,7 @@ from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.entity_registry import EntityRegistry, async_get as async_get_entity_registry
+from .storage import async_get_store
 import math
 import os
 import threading
@@ -255,8 +255,8 @@ class Jablotron:
 		self._stream_data_updating_event: threading.Event = threading.Event()
 		self._stream_diagnostics_event: threading.Event = threading.Event()
 
-		self._store: storage.Store = storage.Store(hass, STORAGE_VERSION, DOMAIN)
-		self._stored_data: dict = {}
+		self._store = async_get_store(hass, STORAGE_VERSION)
+		self._stored_data = self._store.data
 
 		self._central_unit_data: Dict[CentralUnitData, Any] = {}
 		self._devices_data: Dict[str, Dict[DeviceData, Any]] = {}
@@ -384,6 +384,13 @@ class Jablotron:
 
 		return self._central_unit
 
+	def central_unit_device_id(self) -> str:
+		return dr.async_get_device_id_by_identifier(
+			self._hass,
+			(DOMAIN, self.central_unit().unique_id),
+			config_entry_id=self._config_entry_id,
+		)
+
 	def shutdown_and_clean(self) -> None:
 		self.shutdown()
 
@@ -503,13 +510,7 @@ class Jablotron:
 			hass_entity.refresh_state()
 
 	async def _load_stored_data(self) -> None:
-		try:
-			stored_data = await self._store.async_load()
-		except NotImplementedError:
-			# Version upgrade - no migration implemented
-			stored_data = None
-
-		self._stored_data = stored_data or {}
+		await self._store.async_load()
 
 		unique_id = self._get_unique_id()
 
@@ -1056,7 +1057,7 @@ class Jablotron:
 
 			if self._is_device_ignored(device_number):
 				device_registry = dr.async_get(self._hass)
-				existing_device = device_registry.async_get_device(identifiers={(DOMAIN, device_id)})
+				existing_device = device_registry.async_get_device_by_identifier((DOMAIN, device_id), self._config_entry_id)
 				if existing_device is not None:
 					device_registry.async_remove_device(existing_device.id)
 
@@ -2178,6 +2179,12 @@ class Jablotron:
 
 		states_start = 2
 		states_end = states_start + self.bytes_to_int(packet[1:2])
+		if (
+			len(packet) < states_end
+			or (states_end - states_start) * 8 < self._config[CONF_NUMBER_OF_PG_OUTPUTS]
+		):
+			self._log_error_with_packet("Incomplete PG outputs states packet", packet)
+			return
 
 		states = self._bytes_to_reverse_binary(packet[states_start:states_end])
 
@@ -2237,6 +2244,12 @@ class Jablotron:
 		self._update_entity_state(entity_id, initial_state, store_state=False)
 
 	def _update_entity_state(self, entity_id: str, state: StateType | AlarmControlPanelState, store_state: bool = True) -> None:
+		if entity_id in self.hass_entities:
+			self._hass.loop.call_soon_threadsafe(self._apply_entity_state, entity_id, state, store_state)
+		else:
+			self._apply_entity_state(entity_id, state, store_state)
+
+	def _apply_entity_state(self, entity_id: str, state: StateType | AlarmControlPanelState, store_state: bool) -> None:
 		if store_state:
 			self._store_state(entity_id, state)
 
@@ -2244,9 +2257,7 @@ class Jablotron:
 			return
 
 		if entity_id in self.hass_entities:
-			self._hass.loop.call_soon_threadsafe(
-				lambda: self.hass_entities[entity_id].update_state(state)
-			)
+			self.hass_entities[entity_id].update_state(state)
 		else:
 			self.entities_states[entity_id] = state
 
@@ -2256,7 +2267,10 @@ class Jablotron:
 
 	def _log_outcoming_packet(self, packet: bytes) -> None:
 		if self._should_be_outcoming_packet_logged(packet):
-			self._log_debug_with_packet("Outcoming", packet)
+			if packet[:1] == PACKET_UI_CONTROL and packet[2:3] == UI_CONTROL_AUTHORISATION_CODE:
+				LOGGER.debug("Outcoming: authorisation code [redacted]")
+			else:
+				self._log_debug_with_packet("Outcoming", packet)
 
 	def _should_be_incoming_packet_logged(self, packet: bytes) -> bool:
 		if not self._options.get(CONF_ENABLE_DEBUGGING, DEFAULT_CONF_ENABLE_DEBUGGING):
@@ -3369,7 +3383,7 @@ class JablotronEntity(Entity):
 				name=self._control.hass_device.name,
 				translation_key=self._control.hass_device.translation_key,
 				translation_placeholders=self._control.hass_device.translation_placeholders,
-				via_device=(DOMAIN, self._control.central_unit.unique_id),
+				via_device_id=self._jablotron.central_unit_device_id(),
 			)
 
 		self._update_attributes()
